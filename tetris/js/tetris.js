@@ -14,8 +14,12 @@ if(!window.requestAnimationFrame) {
 /* Main variable. All objects, functions and variables will be a member of Tetris */
 var Tetris = {};
 Tetris.swap = {};
+Tetris.sounds = {};
 
 Tetris.init = function() {
+    /* Setup audio */
+    Tetris.sounds["theme"] = document.getElementById("audio_theme");
+
     /* Scene size */
     var width = window.innerWidth;
     var height = window.innerHeight - 100;
@@ -103,6 +107,7 @@ Tetris.init = function() {
     /* Game configuration */
     Tetris.swap.swapped = false;
 
+
     /* First render */
     Tetris.renderer.render(Tetris.scene, Tetris.camera);
 
@@ -121,6 +126,7 @@ Tetris.init = function() {
 
 
 Tetris.start = function() {
+    Tetris.sounds["theme"].play();
     /* Makes menu invisible */
     document.getElementById('menu').style.display = "none";
     Tetris.pointsDOM = document.getElementById('points');
@@ -197,86 +203,105 @@ Tetris.addPoints = function(n) {
     Tetris.pointsDOM.innerHTML = Tetris.currentPoints;
 };
 
-Tetris.rotateBoard = function(direction){
-    if(direction == -1){
-
-        //Rotate Tetriminos
-        for(var currField = 0; currField < 4; currField++){
-            for(var i = 0; i < Tetris.staticBlocks[currField].length; i++){
-                for(var j = 0; j < Tetris.staticBlocks[currField][i].length; j++){
-                    if(Tetris.staticBlocks[currField][i][j].length <= 0)
-                        continue;
-                    switch(currField){
-                        case 0:
-                            Tetris.staticBlocks[currField][i][j].position.z = Tetris.staticBlocks[currField][i][j].position.x + 55;
-                            Tetris.staticBlocks[currField][i][j].position.z *= -1;
-                            Tetris.staticBlocks[currField][i][j].position.x = Tetris.boundingBoxConfig.width/2 + Tetris.boundingBoxConfig.depth/4;
-                            break;
-                        case 1:
-                            Tetris.staticBlocks[currField][i][j].position.x = Tetris.staticBlocks[currField][i][j].position.z + 55;
-                            Tetris.staticBlocks[currField][i][j].position.z = -Tetris.boundingBoxConfig.depth - Tetris.boundingBoxConfig.depth - Tetris.boundingBoxConfig.width;
-                            break;
-                        case 2:
-                            break;
-                        case 3:
-                            break;
-                    }
-                }
-            }
-        }
-
-        Tetris.Board.currentField += 1;
-        if(Tetris.Board.currentField > 3)
-            Tetris.Board.currentField = 0;
-    }
-}
-
 Tetris.rotateCamera = function(alpha){
     switch(Tetris.Board.currentField){
         case 0:
-            Tetris.camera.position.x = 600 + Tetris.boundingBoxConfig.depth + Tetris.boundingBoxConfig.width/2;
-            Tetris.camera.position.z = -Tetris.boundingBoxConfig.width/2 -Tetris.boundingBoxConfig.depth;
-            Tetris.camera.rotation.y = alpha * Math.PI/180;
-            Tetris.Board.currentField = 1;
-            Tetris.Block.mesh.position.z = Tetris.Block.position.x * -1 - Tetris.boundingBoxConfig.width/2 - 1;
-            Tetris.Block.mesh.position.x = Tetris.boundingBoxConfig.width/2 + Tetris.boundingBoxConfig.depth;
-            Tetris.Block.mesh.rotation.y = alpha * Math.PI/180;
-            Tetris.box1.material.color = new THREE.Color(0x222222);
-            Tetris.box2.material.color = new THREE.Color(0x888888);
-            break;
+            if(alpha > 0){ // Goes to board 1
+                Tetris.camera.position.x = 600 + Tetris.boundingBoxConfig.depth + Tetris.boundingBoxConfig.width/2;
+                Tetris.camera.position.z = -Tetris.boundingBoxConfig.width/2 -Tetris.boundingBoxConfig.depth;
+                Tetris.camera.rotation.y = alpha * Math.PI/180;
+                Tetris.Board.currentField = 1;
+                Tetris.Block.mesh.position.x = Tetris.Block.fieldOffset_x(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.position.z = Tetris.Block.fieldOffset_z(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.rotation.y = alpha * Math.PI/180;
+                Tetris.box1.material.color = new THREE.Color(0x222222);
+                Tetris.box2.material.color = new THREE.Color(0x888888);
+                break;
+            } else { // Goes to board 3
+                Tetris.camera.position.x = -600 - Tetris.boundingBoxConfig.depth - Tetris.boundingBoxConfig.width/2;
+                Tetris.camera.position.z = -Tetris.boundingBoxConfig.width/2 -Tetris.boundingBoxConfig.depth;
+                Tetris.camera.rotation.y = -3*alpha * Math.PI/180;
+                Tetris.Board.currentField = 3;
+                Tetris.Block.mesh.position.x = Tetris.Block.fieldOffset_x(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.position.z = Tetris.Block.fieldOffset_z(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.rotation.y += alpha * Math.PI/180;
+                Tetris.box1.material.color = new THREE.Color(0x222222);
+                Tetris.box4.material.color = new THREE.Color(0x888888);
+                break;
+            }
         case 1:
-            Tetris.camera.position.x = 0;
-            Tetris.camera.position.z = -600 - Tetris.boundingBoxConfig.width - Tetris.boundingBoxConfig.depth*2;
-            Tetris.camera.rotation.y += alpha * Math.PI/180;
-            Tetris.Board.currentField = 2;
-            Tetris.Block.mesh.position.x = Tetris.Block.position.x + 1;
-            Tetris.Block.mesh.position.z = -Tetris.boundingBoxConfig.width - 2*Tetris.boundingBoxConfig.depth;
-            Tetris.Block.mesh.rotation.y += alpha * Math.PI/180;
-            Tetris.box2.material.color = new THREE.Color(0x222222);
-            Tetris.box3.material.color = new THREE.Color(0x888888);
-            break;
+            if(alpha > 0){ // Goes to board 2
+                Tetris.camera.position.x = 0;
+                Tetris.camera.position.z = -600 - Tetris.boundingBoxConfig.width - Tetris.boundingBoxConfig.depth*2;
+                Tetris.camera.rotation.y = 2*alpha * Math.PI/180;
+                Tetris.Board.currentField = 2;
+                Tetris.Block.mesh.position.x = Tetris.Block.fieldOffset_x(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.position.z = Tetris.Block.fieldOffset_z(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.rotation.y += alpha * Math.PI/180;
+                Tetris.box2.material.color = new THREE.Color(0x222222);
+                Tetris.box3.material.color = new THREE.Color(0x888888);
+                break;
+            } else { // Goest to board 0
+                Tetris.camera.position.x = 0;
+                Tetris.camera.position.z = 600;
+                Tetris.camera.rotation.y = 0;
+                Tetris.Board.currentField = 0;
+                Tetris.Block.mesh.position.x = Tetris.Block.fieldOffset_x(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.position.z = Tetris.Block.fieldOffset_z(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.rotation.y = 0;
+                Tetris.box2.material.color = new THREE.Color(0x222222);
+                Tetris.box1.material.color = new THREE.Color(0x888888);
+                break;
+            }
         case 2:
-            Tetris.camera.position.x = -600 - Tetris.boundingBoxConfig.depth - Tetris.boundingBoxConfig.width/2;
-            Tetris.camera.position.z = -Tetris.boundingBoxConfig.width/2 -Tetris.boundingBoxConfig.depth;
-            Tetris.camera.rotation.y += alpha * Math.PI/180;
-            Tetris.Board.currentField = 3;
-            Tetris.Block.mesh.position.z = Tetris.Block.position.x * -1 - Tetris.boundingBoxConfig.width/2 - 1;
-            Tetris.Block.mesh.position.x = -Tetris.boundingBoxConfig/2 + Tetris.boundingBoxConfig.depth;
-            Tetris.Block.mesh.rotation.y += alpha * Math.PI/180;
-            Tetris.box3.material.color = new THREE.Color(0x222222);
-            Tetris.box4.material.color = new THREE.Color(0x888888);
-            break;
+            if(alpha > 0){ //Goes to board 3
+                Tetris.camera.position.x = -600 - Tetris.boundingBoxConfig.depth - Tetris.boundingBoxConfig.width/2;
+                Tetris.camera.position.z = -Tetris.boundingBoxConfig.width/2 -Tetris.boundingBoxConfig.depth;
+                Tetris.camera.rotation.y = 3*alpha * Math.PI/180;
+                Tetris.Board.currentField = 3;
+                Tetris.Block.mesh.position.x = Tetris.Block.fieldOffset_x(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.position.z = Tetris.Block.fieldOffset_z(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.rotation.y += alpha * Math.PI/180;
+                Tetris.box3.material.color = new THREE.Color(0x222222);
+                Tetris.box4.material.color = new THREE.Color(0x888888);
+                break;
+            } else { // Goes to board 1
+                Tetris.camera.position.x = 600 + Tetris.boundingBoxConfig.depth + Tetris.boundingBoxConfig.width/2;
+                Tetris.camera.position.z = -Tetris.boundingBoxConfig.width/2 -Tetris.boundingBoxConfig.depth;
+                Tetris.camera.rotation.y = -alpha * Math.PI/180;
+                Tetris.Board.currentField = 1;
+                Tetris.Block.mesh.position.x = Tetris.Block.fieldOffset_x(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.position.z = Tetris.Block.fieldOffset_z(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.rotation.y = -alpha * Math.PI/180;
+                Tetris.box3.material.color = new THREE.Color(0x222222);
+                Tetris.box2.material.color = new THREE.Color(0x888888);
+                break;
+            }
         case 3:
-            Tetris.camera.position.x = 0;
-            Tetris.camera.position.z = 600;
-            Tetris.camera.rotation.y = 0;
-            Tetris.Board.currentField = 0;
-            Tetris.Block.mesh.position.x = -Tetris.Block.position.x - 1;
-            Tetris.Block.mesh.position.z = 0;
-            Tetris.Block.mesh.rotation.y = 0;
-            Tetris.box4.material.color = new THREE.Color(0x222222);
-            Tetris.box1.material.color = new THREE.Color(0x888888);
-            break;
+            if(alpha > 0){ // Goes to board 0
+                Tetris.camera.position.x = 0;
+                Tetris.camera.position.z = 600;
+                Tetris.camera.rotation.y = 0;
+                Tetris.Board.currentField = 0;
+                Tetris.Block.mesh.position.x = Tetris.Block.fieldOffset_x(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.position.z = Tetris.Block.fieldOffset_z(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.position.z = 0;
+                Tetris.Block.mesh.rotation.y = 0;
+                Tetris.box4.material.color = new THREE.Color(0x222222);
+                Tetris.box1.material.color = new THREE.Color(0x888888);
+                break;
+            } else { //Goes to board 2
+                Tetris.camera.position.x = 0;
+                Tetris.camera.position.z = -600 - Tetris.boundingBoxConfig.width - Tetris.boundingBoxConfig.depth*2;
+                Tetris.camera.rotation.y = 2*alpha * Math.PI/180;
+                Tetris.Board.currentField = 2;
+                Tetris.Block.mesh.position.x = Tetris.Block.fieldOffset_x(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.position.z = Tetris.Block.fieldOffset_z(Tetris.Block.position.x, Tetris.Board.currentField);
+                Tetris.Block.mesh.rotation.y += alpha * Math.PI/180;
+                Tetris.box4.material.color = new THREE.Color(0x222222);
+                Tetris.box3.material.color = new THREE.Color(0x888888);
+                break;
+            }
     }
 }
 
@@ -312,9 +337,10 @@ window.addEventListener('keydown', function(event){
             break;
         case 83:
 //            Tetris.rotateBoard(-1);
-            Tetris.rotateCamera(90);
+            Tetris.rotateCamera(-90);
             break;
         case 65:
+            Tetris.rotateCamera(90);
             break;
     }
 }, false);
