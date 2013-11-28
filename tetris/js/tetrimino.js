@@ -64,7 +64,8 @@ Tetris.Block.shapes = [
 
 Tetris.Block.position = {};
 Tetris.Block.colors = [0x00ffff, 0xff0000, 0x00ff00, 0xffff00, 0xff00ff, 0xff5500, 0x0000ff];
-Tetris.Block.color;
+Tetris.Block.color = 0;
+Tetris.Block.hit = false;
 
 Tetris.Block.generate = function() {
     var geometry, tmpGeometry;
@@ -72,6 +73,7 @@ Tetris.Block.generate = function() {
     this.blockType = type;
     var colors = Tetris.Block.colors;
     Tetris.Block.color = colors[type];
+
 
     Tetris.Block.shape = [];
     for(var i = 0; i < Tetris.Block.shapes[type].length; i++){
@@ -131,10 +133,6 @@ Tetris.Block.rotate = function(alpha) {
     }
 };
 
-Tetris.Block.normalizePosition = function(p) {
-    positions = [
-    ]
-}
 
 Tetris.Block.move = function(x,y) {
     Tetris.Block.mesh.position.x += x * Tetris.blockSize;
@@ -149,6 +147,7 @@ Tetris.Block.move = function(x,y) {
     }
 
     if(collision === Tetris.Board.COLLISION.GROUND) {
+        Tetris.Block.hit = true;
         Tetris.Block.hitBottom();
 //        Tetris.Board.checkCompleted();
     }
